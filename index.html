@@ -412,6 +412,55 @@
   .upload-panel input{position:absolute;inline-size:1px;block-size:1px;opacity:0}
   .upload-status{margin-top:12px;color:#d7cdbc;font-size:.92rem}
   .upload-status strong{color:var(--panel)}
+  .editor-workspace{
+    display:none;
+    margin-top:22px;
+    padding:18px;
+    background:var(--panel);
+    color:var(--ink);
+    border-radius:var(--radius);
+    border:1px solid var(--line);
+    box-shadow:0 18px 48px rgba(31,34,28,.18);
+  }
+  .editor-workspace.is-visible{display:block;animation:rise .45s cubic-bezier(.16,1,.3,1) both}
+  .editor-header{display:flex;justify-content:space-between;gap:16px;align-items:start;margin-bottom:12px}
+  .editor-header h3{font-size:1rem;margin-bottom:4px}
+  .editor-header p{color:var(--muted);font-size:.86rem}
+  .editor-score{
+    min-width:76px;
+    padding:8px 10px;
+    border-radius:7px;
+    background:var(--sage-soft);
+    color:var(--sage);
+    text-align:center;
+    font-weight:900;
+  }
+  .editor-score span{display:block;font-size:.64rem;text-transform:uppercase;letter-spacing:.08em}
+  .resume-editor{
+    width:100%;
+    min-height:280px;
+    resize:vertical;
+    border:1px solid var(--line);
+    border-radius:7px;
+    padding:14px;
+    background:#fffdf8;
+    color:var(--ink);
+    font:500 .92rem/1.55 "Manrope",sans-serif;
+  }
+  .resume-editor:focus{outline:3px solid rgba(216,165,59,.35);border-color:var(--gold)}
+  .editor-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+  .editor-actions button{
+    min-height:40px;
+    border-radius:7px;
+    border:1px solid var(--line);
+    background:var(--panel-strong);
+    color:var(--ink);
+    padding:10px 12px;
+    font-weight:800;
+    cursor:pointer;
+  }
+  .editor-actions button:first-child{background:var(--sage);border-color:var(--sage);color:var(--panel)}
+  .editor-note{margin-top:10px;color:var(--muted);font-size:.82rem}
   footer{border-top:1px solid var(--line);padding:30px 0;color:var(--muted);font-size:.88rem}
   footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 
@@ -751,9 +800,25 @@
           <button class="btn-primary upload-trigger" type="button">Upload Your Resume Free</button>
           <form class="upload-panel" aria-label="Resume upload form">
             <label class="mono" for="resume-file" style="display:block;color:var(--gold);font-size:.74rem;font-weight:800;text-transform:uppercase;letter-spacing:.09em;margin-bottom:8px;">Select PDF, DOC, or DOCX</label>
-            <input id="resume-file" name="resume-file" type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+            <input id="resume-file" name="resume-file" type="file" accept=".pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain">
             <p id="upload-status" class="upload-status" aria-live="polite">No file selected yet.</p>
           </form>
+          <div id="editor-workspace" class="editor-workspace" aria-live="polite">
+            <div class="editor-header">
+              <div>
+                <h3>Edit your resume draft</h3>
+                <p>Make changes below, improve the wording, then download the edited text.</p>
+              </div>
+              <div class="editor-score"><span>ATS</span><strong id="editor-score">74</strong></div>
+            </div>
+            <textarea id="resume-editor" class="resume-editor" spellcheck="true"></textarea>
+            <div class="editor-actions">
+              <button id="improve-resume" type="button">Improve Wording</button>
+              <button id="clear-editor" type="button">Clear</button>
+              <button id="download-resume" type="button">Download Edited Resume</button>
+            </div>
+            <p id="editor-note" class="editor-note">Plain text files load automatically. PDF, DOC, and DOCX files open this editable draft so you can paste or revise the resume text.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -770,6 +835,28 @@
   const fileInput = document.querySelector("#resume-file");
   const uploadStatus = document.querySelector("#upload-status");
   const uploadSection = document.querySelector("#upload");
+  const editorWorkspace = document.querySelector("#editor-workspace");
+  const resumeEditor = document.querySelector("#resume-editor");
+  const improveResume = document.querySelector("#improve-resume");
+  const clearEditor = document.querySelector("#clear-editor");
+  const downloadResume = document.querySelector("#download-resume");
+  const editorScore = document.querySelector("#editor-score");
+  const editorNote = document.querySelector("#editor-note");
+
+  const starterDraft = `Jordan Patel
+Product Manager
+
+SUMMARY
+Product manager with experience coordinating roadmaps, improving delivery processes, and working with engineering, sales, and customer teams.
+
+EXPERIENCE
+Product Manager, Market Lane Software
+- Managed the product backlog for reporting and analytics features.
+- Worked with engineering to ship dashboard improvements.
+- Talked to customers and shared feedback with leadership.
+
+SKILLS
+Roadmap planning, SQL, stakeholder management, Agile delivery, analytics`;
 
   document.querySelectorAll(".upload-trigger").forEach((button) => {
     button.addEventListener("click", (event) => {
@@ -784,6 +871,7 @@
 
     if (!file) {
       uploadStatus.textContent = "No file selected yet.";
+      editorWorkspace.classList.remove("is-visible");
       return;
     }
 
@@ -793,6 +881,87 @@
     const name = document.createElement("strong");
     name.textContent = file.name;
     uploadStatus.append(name, ` selected (${sizeInMb} MB).`);
+    editorWorkspace.classList.add("is-visible");
+    editorWorkspace.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+    const isTextFile = file.type === "text/plain" || file.name.toLowerCase().endsWith(".txt");
+    editorNote.textContent = isTextFile
+      ? "Your text resume loaded into the editor. Make changes below and download the edited version."
+      : "This static demo cannot extract text from PDF, DOC, or DOCX files in the browser. Paste your resume text here or edit the starter draft below.";
+
+    if (isTextFile) {
+      const reader = new FileReader();
+      reader.addEventListener("load", () => {
+        resumeEditor.value = reader.result || "";
+        updateScore();
+      });
+      reader.readAsText(file);
+    } else {
+      resumeEditor.value = starterDraft;
+      updateScore();
+    }
+  });
+
+  function updateScore() {
+    const text = resumeEditor.value.toLowerCase();
+    const keywords = ["roadmap", "sql", "stakeholder", "agile", "analytics", "revenue", "improved", "launched"];
+    const matches = keywords.filter((keyword) => text.includes(keyword)).length;
+    editorScore.textContent = Math.min(96, 58 + matches * 5 + Math.floor(resumeEditor.value.length / 260));
+  }
+
+  resumeEditor.addEventListener("input", updateScore);
+
+  improveResume.addEventListener("click", () => {
+    const currentText = resumeEditor.value.trim();
+
+    if (!currentText) {
+      resumeEditor.value = starterDraft;
+      editorNote.textContent = "Added a starter draft. Edit it with your own resume details before downloading.";
+      updateScore();
+      return;
+    }
+
+    const improvedText = currentText
+      .replace(/\bmanaged\b/gi, "Led")
+      .replace(/\bworked with\b/gi, "Partnered with")
+      .replace(/\btalked to\b/gi, "Interviewed")
+      .replace(/\bhelped\b/gi, "Contributed to")
+      .replace(/\bmade\b/gi, "Built");
+
+    resumeEditor.value = `${improvedText}
+
+KEY APPLICATION HIGHLIGHTS
+- Quantified business impact where possible.
+- Matched resume language to role-specific keywords.
+- Prioritized clear outcomes over task descriptions.`;
+    editorNote.textContent = "Wording improved. Review the draft and adjust any details that should be more specific.";
+    updateScore();
+  });
+
+  clearEditor.addEventListener("click", () => {
+    resumeEditor.value = "";
+    editorNote.textContent = "Editor cleared. Paste resume text here to start editing again.";
+    updateScore();
+    resumeEditor.focus();
+  });
+
+  downloadResume.addEventListener("click", () => {
+    const text = resumeEditor.value.trim();
+
+    if (!text) {
+      editorNote.textContent = "Add resume text before downloading.";
+      resumeEditor.focus();
+      return;
+    }
+
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "edited-resume.txt";
+    link.click();
+    URL.revokeObjectURL(url);
+    editorNote.textContent = "Edited resume downloaded as a text file.";
   });
 </script>
 </body>
