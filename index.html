@@ -134,6 +134,7 @@
   .nav-cta:hover,.btn-primary:hover{transform:translateY(-3px);box-shadow:0 13px 0 rgba(31,34,28,.1)}
   .btn-secondary{padding:15px 20px;border:1px solid var(--line);background:rgba(255,250,241,.72)}
   .btn-secondary:hover{border-color:var(--ink);transform:translateY(-3px)}
+  .upload-trigger{appearance:none}
 
   .hero{padding:80px 0 58px;position:relative}
   .hero-grid{display:grid;grid-template-columns:minmax(0,1.02fr) minmax(360px,.98fr);gap:56px;align-items:center}
@@ -401,6 +402,16 @@
   }
   .final-cta p{color:#d7cdbc;margin-top:15px;max-width:520px}
   .final-cta .btn-primary{background:var(--gold);color:var(--ink);border-color:var(--gold);justify-self:end}
+  .upload-panel{
+    margin-top:24px;
+    padding:18px;
+    border:1px dashed rgba(255,250,241,.46);
+    border-radius:var(--radius);
+    background:rgba(255,250,241,.08);
+  }
+  .upload-panel input{position:absolute;inline-size:1px;block-size:1px;opacity:0}
+  .upload-status{margin-top:12px;color:#d7cdbc;font-size:.92rem}
+  .upload-status strong{color:var(--panel)}
   footer{border-top:1px solid var(--line);padding:30px 0;color:var(--muted);font-size:.88rem}
   footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 
@@ -462,7 +473,7 @@
       <a href="#pricing">Pricing</a>
       <a href="#stories">Stories</a>
     </div>
-    <a href="#upload" class="nav-cta">Upload Resume</a>
+    <a href="#upload" class="nav-cta upload-trigger">Upload Resume</a>
   </nav>
 </header>
 
@@ -474,7 +485,7 @@
         <h1 id="hero-title" class="display">Make every resume read like a <span class="hero-title-accent">shortlist</span> candidate.</h1>
         <p class="hero-sub">Rewrite turns an existing resume into a sharper, ATS-ready application with stronger bullets, job-specific keywords, polished templates, and a matching cover letter.</p>
         <div class="hero-actions">
-          <button class="btn-primary" type="button">Upload Your Resume</button>
+          <button class="btn-primary upload-trigger" type="button">Upload Your Resume</button>
           <a class="btn-secondary" href="#templates">Browse Templates</a>
         </div>
         <div class="trust-row" aria-label="Trust signals">
@@ -672,7 +683,7 @@
             <li>Two templates</li>
             <li>Watermarked PDF export</li>
           </ul>
-          <a href="#upload" class="pkg-cta">Get Started</a>
+          <a href="#upload" class="pkg-cta upload-trigger">Get Started</a>
         </article>
         <article class="pkg-card featured">
           <span class="pkg-tag">Most popular</span>
@@ -684,7 +695,7 @@
             <li>Full ATS score and keyword match</li>
             <li>All templates and clean PDF export</li>
           </ul>
-          <a href="#upload" class="pkg-cta">Start Pro Trial</a>
+          <a href="#upload" class="pkg-cta upload-trigger">Start Pro Trial</a>
         </article>
         <article class="pkg-card">
           <h3 class="pkg-name">Career Bundle</h3>
@@ -695,7 +706,7 @@
             <li>LinkedIn profile optimization</li>
             <li>Priority support</li>
           </ul>
-          <a href="#upload" class="pkg-cta">Choose Bundle</a>
+          <a href="#upload" class="pkg-cta upload-trigger">Choose Bundle</a>
         </article>
       </div>
     </div>
@@ -736,7 +747,14 @@
           <h2 class="display">Stop guessing why the resume is not landing.</h2>
           <p>Upload the current version and get an improved resume, ATS score, and matching cover letter in under a minute.</p>
         </div>
-        <button class="btn-primary" type="button">Upload Your Resume Free</button>
+        <div>
+          <button class="btn-primary upload-trigger" type="button">Upload Your Resume Free</button>
+          <form class="upload-panel" aria-label="Resume upload form">
+            <label class="mono" for="resume-file" style="display:block;color:var(--gold);font-size:.74rem;font-weight:800;text-transform:uppercase;letter-spacing:.09em;margin-bottom:8px;">Select PDF, DOC, or DOCX</label>
+            <input id="resume-file" name="resume-file" type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+            <p id="upload-status" class="upload-status" aria-live="polite">No file selected yet.</p>
+          </form>
+        </div>
       </div>
     </div>
   </section>
@@ -748,5 +766,34 @@
     <span>AI resume builder, ATS checker, and cover letter generator.</span>
   </div>
 </footer>
+<script>
+  const fileInput = document.querySelector("#resume-file");
+  const uploadStatus = document.querySelector("#upload-status");
+  const uploadSection = document.querySelector("#upload");
+
+  document.querySelectorAll(".upload-trigger").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      uploadSection.scrollIntoView({ behavior: "smooth", block: "center" });
+      fileInput.click();
+    });
+  });
+
+  fileInput.addEventListener("change", () => {
+    const file = fileInput.files[0];
+
+    if (!file) {
+      uploadStatus.textContent = "No file selected yet.";
+      return;
+    }
+
+    const sizeInMb = (file.size / 1024 / 1024).toFixed(2);
+    uploadStatus.replaceChildren();
+
+    const name = document.createElement("strong");
+    name.textContent = file.name;
+    uploadStatus.append(name, ` selected (${sizeInMb} MB).`);
+  });
+</script>
 </body>
 </html>
